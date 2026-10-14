@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DocFlare AI - Admin</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root {
+      --bg: #f7f7f8; --card: #fff; --fg: #111827; --mu: #6b7280; --bd: #e5e7eb; --a: #f6821f;
+      --ok: #16a34a; --warn: #d97706; --err: #dc2626; --code: #f3f4f6; --sh: 0 1px 2px rgba(0,0,0,.05);
+      color-scheme: light;
+    }
+    :root[data-theme="dark"] {
+      --bg: #0b1220; --card: #111827; --fg: #f3f4f6; --mu: #9ca3af; --bd: #1f2937; --code: #0f172a; --sh: none;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    a { color: var(--a); text-decoration: none; }
+    code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+    header { display: flex; align-items: center; gap: 14px; padding: 14px 28px; background: var(--card); border-bottom: 1px solid var(--bd); position: sticky; top: 0; z-index: 2; }
+    header .logo { font-weight: 700; font-size: 17px; }
+    header .logo span { color: var(--a); }
+    header .sp { flex: 1; }
+    .pill { font-size: 11px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--bd); color: var(--mu); }
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; display: grid; gap: 22px; }
+    h1 { font-size: 22px; margin: 0; }
+    h2 { font-size: 15px; margin: 0 0 12px; }
+    .sub { color: var(--mu); margin: 4px 0 0; }
+    .card { background: var(--card); border: 1px solid var(--bd); border-radius: 14px; padding: 18px 20px; box-shadow: var(--sh); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    label { display: block; font-size: 12px; color: var(--mu); margin-bottom: 4px; }
+    input { width: 100%; padding: 9px 12px; border: 1px solid var(--bd); border-radius: 9px; background: var(--bg); color: var(--fg); font: inherit; }
+    input:focus { outline: none; border-color: var(--a); }
+    .field { flex: 1; min-width: 180px; }
+    button { font: inherit; font-size: 13px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--bd); background: var(--card); color: var(--fg); cursor: pointer; }
+    button:hover { border-color: var(--a); }
+    button.pri { background: var(--a); border-color: var(--a); color: #fff; font-weight: 600; }
+    button.dng { color: var(--err); }
+    button:disabled { opacity: .5; cursor: default; }
+    .sites { display: grid; gap: 14px; }
+    .site { display: grid; gap: 12px; }
+    .site .top { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+    .site .id { font-weight: 700; font-size: 16px; }
+    .site .dom { color: var(--mu); }
+    .bar { height: 8px; border-radius: 999px; background: var(--bd); overflow: hidden; display: flex; }
+    .bar i { display: block; height: 100%; }
+    .bar .ok { background: var(--ok); } .bar .er { background: var(--err); } .bar .pe { background: var(--warn); opacity: .6; }
+    .stats { display: flex; gap: 16px; font-size: 12.5px; color: var(--mu); flex-wrap: wrap; }
+    .stats b { color: var(--fg); }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+    .ok .dot { background: var(--ok); } .er .dot { background: var(--err); } .pe .dot { background: var(--warn); }
+    details { border-top: 1px solid var(--bd); padding-top: 10px; }
+    summary { cursor: pointer; color: var(--mu); font-size: 13px; }
+    pre.snip { background: var(--code); border: 1px solid var(--bd); border-radius: 9px; padding: 10px 12px; overflow-x: auto; margin: 8px 0 0; white-space: pre-wrap; word-break: break-all; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--bd); vertical-align: top; }
+    th { color: var(--mu); font-weight: 500; font-size: 12px; }
+    td.q { width: 34%; font-weight: 500; }
+    td.r { color: var(--mu); }
+    td.t { white-space: nowrap; color: var(--mu); font-size: 12px; }
+    .log { max-height: 220px; overflow: auto; background: var(--code); border: 1px solid var(--bd); border-radius: 9px; padding: 10px 12px; margin: 0; white-space: pre-wrap; }
+    .log .e { color: var(--err); } .log .s { color: var(--ok); }
+    .empty { color: var(--mu); text-align: center; padding: 24px; }
+    .toggle { font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Doc<span>Flare</span> AI <span class="pill">admin</span></div>
+    <div class="sp"></div>
+    <span class="pill mono" id="origin"></span>
+    <button class="toggle" id="theme" title="Toggle theme">◐</button>
+    <a href="https://github.com/p10node/docflare-ai" target="_blank" rel="noopener" class="pill">GitHub</a>
+  </header>
+
+  <main>
+    <div>
+      <h1>Sites</h1>
+      <p class="sub">Register documentation sites, drive indexing, inspect what users ask. Everything here calls the <code>/api/sites/*</code> endpoints with your admin token.</p>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Admin token</h2>
+        <div class="row">
+          <div class="field"><label for="token">ADMIN_TOKEN (stored in this tab only)</label><input id="token" type="password" placeholder="paste the secret set with wrangler secret put ADMIN_TOKEN"></div>
+          <button class="pri" id="connect">Connect</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Register / re-index a site</h2>
+        <form id="reg" class="row">
+          <div class="field"><label for="siteId">siteId</label><input id="siteId" placeholder="my-docs" required pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}"></div>
+          <div class="field" style="flex:2"><label for="sitemap">sitemapUrl</label><input id="sitemap" type="url" placeholder="https://docs.example.com/sitemap.xml" required></div>
+          <div class="field"><label for="domain">domain (optional)</label><input id="domain" placeholder="docs.example.com"></div>
+          <button class="pri" type="submit">Queue pages</button>
+        </form>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0">Indexed sites</h2>
+        <button id="refresh">Refresh</button>
+      </div>
+      <div class="sites" id="sites"><div class="empty">Connect with your admin token to load sites.</div></div>
+    </section>
+
+    <section class="card">
+      <h2>Activity</h2>
+      <pre class="log" id="log">ready</pre>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var base = location.origin;
+      var $ = function (s, r) { return (r || document).querySelector(s); };
+      var tokenEl = $('#token'), sitesEl = $('#sites'), logEl = $('#log');
+      var token = sessionStorage.getItem('docflare_admin_token') || '';
+      var running = {};
+      $('#origin').textContent = base;
+      tokenEl.value = token;
+
+      // Theme: ?theme=dark|light, then saved preference, then system.
+      var qs = new URLSearchParams(location.search);
+      var theme = qs.get('theme') || localStorage.getItem('docflare_admin_theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      function setTheme(t) { theme = t; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('docflare_admin_theme', t); }
+      setTheme(theme);
+      $('#theme').onclick = function () { setTheme(theme === 'dark' ? 'light' : 'dark'); };
+
+      function esc(x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      function log(msg, cls) {
+        var line = document.createElement('div');
+        if (cls) line.className = cls;
+        line.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+        logEl.appendChild(line); logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function api(method, path, body) {
+        return fetch(base + path, {
+          method: method,
+          headers: Object.assign({ 'Authorization': 'Bearer ' + token }, body ? { 'Content-Type': 'application/json' } : {}),
+          body: body ? JSON.stringify(body) : undefined
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            if (!r.ok) throw new Error(j.error || (method + ' ' + path + ' failed (' + r.status + ')'));
+            return j;
+          });
+        });
+      }
+
+      function pct(n, total) { return total ? (100 * n / total) + '%' : '0%'; }
+
+      function renderSites(list) {
+        if (!list.length) { sitesEl.innerHTML = '<div class="empty">No sites yet. Register one above.</div>'; return; }
+        sitesEl.innerHTML = list.map(function (s) {
+          var p = s.progress, snippet = '<script src="' + base + '/widget.js" data-site-id="' + s.id + '" data-theme="auto" defer><\/script>';
+          return '<div class="site" data-id="' + esc(s.id) + '">' +
+            '<div class="top"><span class="id">' + esc(s.id) + '</span><span class="dom">' + esc(s.domain) + '</span>' +
+              '<a class="mono" href="' + esc(s.sitemap_url) + '" target="_blank" rel="noopener">' + esc(s.sitemap_url) + '</a></div>' +
+            '<div class="bar"><i class="ok" style="width:' + pct(p.indexed, p.total) + '"></i><i class="er" style="width:' + pct(p.failed, p.total) + '"></i><i class="pe" style="width:' + pct(p.pending, p.total) + '"></i></div>' +
+            '<div class="stats"><span class="ok"><span class="dot"></span><b>' + p.indexed + '</b> indexed</span><span class="pe"><span class="dot"></span><b>' + p.pending + '</b> pending</span><span class="er"><span class="dot"></span><b>' + p.failed + '</b> failed</span><span><b>' + p.total + '</b> pages</span></div>' +
+            '<div class="row">' +
+              '<button class="pri" data-act="all"' + (p.pending ? '' : ' disabled') + '>' + (running[s.id] ? 'Indexing…' : 'Index all pending') + '</button>' +
+              '<button data-act="batch"' + (p.pending ? '' : ' disabled') + '>Process one batch</button>' +
+              '<button data-act="recrawl">Re-crawl sitemap</button>' +
+              '<button data-act="queries">Recent questions</button>' +
+              '<button class="dng" data-act="delete">Delete</button>' +
+            '</div>' +
+            '<details><summary>Embed snippet</summary><pre class="snip">' + esc(snippet) + '</pre></details>' +
+            '<div class="queries"></div>' +
+          '</div>';
+        }).join('');
+      }
+
+      function loadSites() {
+        return api('GET', '/api/sites').then(function (j) { renderSites(j.sites); return j.sites; })
+          .catch(function (e) { log(e.message, 'e'); });
+      }
+
+      function processBatch(id) {
+        return api('POST', '/api/sites/' + id + '/process').then(function (j) {
+          j.results.forEach(function (r) { log(r.status + '  ' + r.url + (r.chunks ? '  (' + r.chunks + ' chunks)' : '') + (r.error ? '  ' + r.error : ''), r.status === 'failed' ? 'e' : 's'); });
+          return j;
+        });
+      }
+
+      function indexAll(id) {
+        running[id] = true;
+        log('indexing ' + id + ' until the queue is empty…');
+        (function loop() {
+          processBatch(id).then(function (j) {
+            renderAfter();
+            if (j.rateLimited) { log('Workers AI rate limited, pausing 60s', 'e'); return setTimeout(loop, 60000); }
+            if (j.progress.pending > 0) return loop();
+            running[id] = false; log('done: ' + j.progress.indexed + ' indexed, ' + j.progress.failed + ' failed', 's'); loadSites();
+          }).catch(function (e) { running[id] = false; log(e.message, 'e'); loadSites(); });
+        })();
+      }
+
+      function renderAfter() { loadSites(); }
+
+      function showQueries(id, holder) {
+        api('GET', '/api/sites/' + id + '/queries?limit=20').then(function (j) {
+          holder.innerHTML = j.queries.length
+            ? '<table><tr><th>Question</th><th>Answer</th><th>When</th></tr>' + j.queries.map(function (q) {
+                return '<tr><td class="q">' + esc(q.prompt) + '</td><td class="r">' + esc((q.response || '').slice(0, 160)) + ((q.response || '').length > 160 ? '…' : '') + '</td><td class="t">' + esc(q.created_at) + '</td></tr>';
+              }).join('') + '</table>'
+            : '<div class="empty">No questions logged yet.</div>';
+        }).catch(function (e) { log(e.message, 'e'); });
+      }
+
+      sitesEl.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-act]'); if (!btn) return;
+        var card = btn.closest('.site'), id = card.getAttribute('data-id'), act = btn.getAttribute('data-act');
+        if (act === 'batch') processBatch(id).then(loadSites).catch(function (er) { log(er.message, 'e'); });
+        if (act === 'all') indexAll(id);
+        if (act === 'queries') showQueries(id, $('.queries', card));
+        if (act === 'recrawl') {
+          var sm = $('.top a', card).getAttribute('href');
+          api('POST', '/api/sites/index', { siteId: id, sitemapUrl: sm }).then(function (j) { log('queued ' + j.queued + ' pages for ' + id, 's'); loadSites(); }).catch(function (er) { log(er.message, 'e'); });
+        }
+        if (act === 'delete' && confirm('Delete site "' + id + '", its pages, chat log and vectors?')) {
+          api('DELETE', '/api/sites/' + id).then(function (j) { log('deleted ' + id + ' (' + j.vectorsDeleted + ' vectors)', 's'); loadSites(); }).catch(function (er) { log(er.message, 'e'); });
+        }
+      });
+
+      $('#connect').onclick = function () {
+        token = tokenEl.value.trim(); sessionStorage.setItem('docflare_admin_token', token);
+        loadSites().then(function (s) { if (s) log('connected, ' + s.length + ' site(s)', 's'); });
+      };
+      $('#refresh').onclick = loadSites;
+      $('#reg').onsubmit = function (e) {
+        e.preventDefault();
+        var body = { siteId: $('#siteId').value.trim(), sitemapUrl: $('#sitemap').value.trim() };
+        var d = $('#domain').value.trim(); if (d) body.domain = d;
+        api('POST', '/api/sites/index', body).then(function (j) { log('queued ' + j.queued + ' pages for ' + j.siteId + ' (' + j.domain + ')', 's'); loadSites(); })
+          .catch(function (er) { log(er.message, 'e'); });
+      };
+
+      if (token) loadSites();
+    })();
+  </script>
+</body>
+</html>

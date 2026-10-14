@@ -1,0 +1,3 @@
+# Copy to .dev.vars for local development (`bunx wrangler dev`). Never commit .dev.vars.
+# Placeholder only - the Deploy to Cloudflare wizard prompts for this; replace it (e.g. `openssl rand -hex 32`).
+ADMIN_TOKEN=dev-token-change-me

@@ -1,0 +1,57 @@
+# DocFlare AI - Cloudflare Worker configuration
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "docflare-ai"
+main = "src/index.ts"
+compatibility_date = "2024-09-25"
+
+# Workers AI binding (embeddings + text generation). No API keys required.
+[ai]
+binding = "AI"
+
+# Vectorize index: 384 dimensions (bge-small-en-v1.5), cosine metric.
+# Create it with: bunx wrangler vectorize create docflare-index --dimensions=384 --metric=cosine
+[[vectorize]]
+binding = "VECTOR_INDEX"
+index_name = "docflare-index"
+
+# D1 database for sites, pages and chat history.
+# Create it with: bunx wrangler d1 create docflare-db
+# Then either paste the database_id below, or put it in .env as D1_DATABASE_ID (see README)
+# to keep it out of git: `bun run deploy` / `bun run db:migrate` then use a generated wrangler.local.toml.
+[[d1_databases]]
+binding = "DB"
+database_name = "docflare-db"
+database_id = "0da64a0a-e722-44ee-a949-ef4cd98a73c0"
+migrations_dir = "migrations"
+
+# Static assets (widget.js, demo page). Served at the edge before the Worker runs.
+# Requests that do not match an asset (e.g. /api/*) fall through to the Worker.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "none"
+
+# Background indexer: processes pending pages in small, free-tier-safe batches.
+[triggers]
+crons = ["* * * * *"]
+
+# Non-secret configuration. Override with `wrangler deploy --var KEY:VALUE` or edit here.
+[vars]
+# Comma-separated list of extra origins allowed to call /api/chat in addition to each site's own domain.
+# Use "*" to allow any origin (not recommended for production).
+ALLOWED_ORIGINS = "https://tangoera.com,https//acrosstar.com"
+# Max URLs taken from a sitemap per indexing run.
+MAX_PAGES = "300"
+# Pages crawled + embedded per invocation (cron tick or /process call). Keep small on the Workers Free plan.
+INDEX_BATCH_SIZE = "3"
+# Number of chunks handed to the LLM for each question.
+TOP_K = "4"
+# Rerank the 20 best vector matches with @cf/baai/bge-reranker-base before picking TOP_K ("false" to disable).
+RERANK = "true"
+
+# Secrets (set with `bunx wrangler secret put <NAME>`, never commit them):
+#   ADMIN_TOKEN - bearer token required by the /api/sites/* management endpoints.
+
+[observability]
+enabled = true

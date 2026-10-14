@@ -1,0 +1,66 @@
+{
+  "name": "docflare-ai",
+  "version": "0.1.0",
+  "description": "Open-source, zero-cost AI site search & chatbot widget running 100% on Cloudflare Workers, Workers AI, Vectorize and D1.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/p10node/docflare-ai.git"
+  },
+  "homepage": "https://github.com/p10node/docflare-ai#readme",
+  "bugs": "https://github.com/p10node/docflare-ai/issues",
+  "keywords": [
+    "cloudflare",
+    "cloudflare-workers",
+    "workers-ai",
+    "vectorize",
+    "d1",
+    "hono",
+    "rag",
+    "chatbot",
+    "documentation",
+    "site-search"
+  ],
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "VECTOR_INDEX": {
+        "description": "Vectorize index for `@cf/baai/bge-small-en-v1.5` embeddings: set **Dimensions = 384** and **Metric = cosine**. Any other shape breaks indexing."
+      },
+      "DB": {
+        "description": "D1 database for sites, pages and chat history. Apply the schema once after the first deploy with `bun run db:migrate` (see README)."
+      },
+      "ADMIN_TOKEN": {
+        "description": "Bearer token for the `/api/sites/*` management routes and the `/admin` page. Replace the example value with a random one, e.g. `openssl rand -hex 32`."
+      }
+    }
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "dev:cron": "wrangler dev --test-scheduled",
+    "build:widget": "bun build widget/widget.src.js --minify --target=browser --outfile=public/widget.js",
+    "build:check": "bun run typecheck && wrangler deploy --dry-run --outdir=dist",
+    "deploy": "bun run build:widget && bun scripts/wrangler.ts deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "db:create": "wrangler d1 create docflare-db",
+    "db:migrate": "bun scripts/wrangler.ts d1 migrations apply DB --remote",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "vectorize:create": "wrangler vectorize create docflare-index --dimensions=384 --metric=cosine",
+    "secret:admin": "wrangler secret put ADMIN_TOKEN",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "hono": "^4.13.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261006.1",
+    "@types/bun": "latest",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.148.0"
+  }
+}

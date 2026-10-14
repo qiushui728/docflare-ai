@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DocFlare AI - Demo</title>
+  <meta name="description" content="Open-source, zero-cost AI site search and chatbot widget running entirely on Cloudflare.">
+  <style>
+    :root { color-scheme: light dark; --fg: #1a1a1a; --mu: #6b7280; --bg: #fff; --bd: #e5e7eb; --a: #f6821f; }
+    @media (prefers-color-scheme: dark) { :root { --fg: #f3f4f6; --mu: #9ca3af; --bg: #0b1220; --bd: #1f2937; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+    main { max-width: 720px; margin: 0 auto; padding: 64px 20px 120px; }
+    h1 { font-size: 2.2rem; margin: 0 0 8px; }
+    h1 span { color: var(--a); }
+    .lead { color: var(--mu); font-size: 1.1rem; margin-top: 0; }
+    h2 { margin-top: 40px; font-size: 1.25rem; }
+    pre { background: rgba(127,127,127,.12); border: 1px solid var(--bd); border-radius: 10px; padding: 14px; overflow-x: auto; font-size: 13px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    a { color: var(--a); }
+    .pill { display: inline-block; padding: 2px 10px; border: 1px solid var(--bd); border-radius: 999px; font-size: 12px; color: var(--mu); margin-right: 6px; }
+    .hint { padding: 12px 14px; border-left: 3px solid var(--a); background: rgba(246,130,31,.08); border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p>
+      <span class="pill">Workers</span><span class="pill">Workers AI</span><span class="pill">Vectorize</span><span class="pill">D1</span><span class="pill">Hono</span>
+    </p>
+    <h1>Doc<span>Flare</span> AI</h1>
+    <p class="lead">Open-source, zero-cost AI site search &amp; chatbot widget. 100% Cloudflare native.</p>
+
+    <p class="hint">
+      This Worker is running. The chat bubble in the corner is the embeddable widget served from
+      <code>/widget.js</code>. Index a site, then point the widget at it with <code>data-site-id</code>.
+    </p>
+
+    <h2>1. Index your documentation</h2>
+<pre><code>curl -X POST "$WORKER_URL/api/sites/index" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"siteId":"demo","sitemapUrl":"https://docs.example.com/sitemap.xml"}'</code></pre>
+
+    <h2>2. Embed the widget</h2>
+<pre><code>&lt;script src="$WORKER_URL/widget.js" data-site-id="demo" data-theme="auto" defer&gt;&lt;/script&gt;</code></pre>
+
+    <h2>3. Ask questions</h2>
+    <p>Open the bubble in the bottom-right corner and ask something. Answers stream in with their sources.</p>
+
+    <p><a href="/admin">Admin UI</a> · <a href="/api/health">Health check</a> · <a href="https://github.com/p10node/docflare-ai">GitHub repository</a></p>
+  </main>
+
+  <!-- The site id "demo" must be registered via /api/sites/index before the widget can answer. -->
+  <script src="/widget.js" data-site-id="demo" data-theme="auto" data-title="Ask DocFlare" defer></script>
+</body>
+</html>
