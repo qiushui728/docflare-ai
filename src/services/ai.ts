@@ -170,16 +170,50 @@ export async function rerankChunks(ai: Ai, query: string, chunks: RetrievedChunk
 // RAG prompt
 // ---------------------------------------------------------------------------
 
+/**
+ * Curated per-site fact sheet injected into the system prompt (distilled from the customer-service
+ * knowledge base, 2026-10-14). Retrieval alone can rank the wrong section (e.g. a question about the
+ * personal tiers pulling the institutional tier); these authoritative essentials sit next to the
+ * rules so pricing/contacts/boundaries survive any ranking wobble. Matched by domain substring.
+ */
+const SITE_KB_ESSENTIALS: Array<{ match: string; facts: string }> = [
+  {
+    match: 'tangoera',
+    facts: `- TangoEra is a ~90-second, 6-question assessment producing 7-dimension decision-profile charts: self-reflection and decision support, not a verdict. Never medical/psychological/legal/financial/investment advice; not astrology or fortune-telling; no predictions of future results, no guarantees; statistics show weak correlations only.
+- Personal tiers (USD, one-time): Free Chart $0 (matrix + 1 of 7 dimensions, no email required). Starter $49. Full 9-page Profile $199. Standard $399 (4-page snapshot, 7-dim radar, matrix, energy roles, Entry Experience, 3 short-term actions). In-Depth $699 (complete 9-page profile, Bias Spectrum, heatmap, cohort comparison, 30-day actions, free redo within 30 days). Tracking $30/month. Coaching $999 per session (+$250/hr extra). First 20 users get the $49 Starter free with code FEEDBACK20.
+- Advisory and Institutional programs are separate B2B offerings, NOT the personal tiers: Advisory from $4,800, Institutional from $49,800, by invitation, scoped in a signed engagement letter.
+- Delivery: free snapshot ~2 minutes (2-page PDF by email, check spam). Paid reports delivered 24-48h after valid birth data; every conclusion carries a trace (input + rule).
+- Refunds: full refund within 14 days if not delivered (EU withdrawal right); one free redo within 30 days; accuracy refund - if any conclusion cannot be traced, full refund automatically within 48h of the request (reply to the delivery email with the order number).
+- Contact: support@tangoera.com (privacy: privacy@tangoera.com); a person reads every message, typically replies within 24 hours; Mon-Fri 9:00am-6:00pm EST.`,
+  },
+  {
+    match: 'acrosstar',
+    facts: `- Acrosstar offers 1:1 classical Chinese chrono-psychology (BaZi / GanZhi) consultations by an independent practitioner, for overseas Chinese, founders and tech/creative professionals. It maps innate patterns, talents and life-cycle rhythm for decision insight; not fatalism, no 100%-accuracy claims - only coherent, sincere analysis. No mystique, no fear-selling, no talisman upsells; strictly confidential.
+- Tiers (USD, one-time, transparent): Standard $399 - 60-minute 1:1 session (video / voice / IM), personal archetype decoding, current timing-window reading, written synthesis report within 48 hours. In-Depth $699 - adds couple/partnership dynamics reading, multi-year cycle mapping, and a 3-month written Q&A window (included, no extra charge). No hidden repurchases, no discount-code games, no fear-then-pay-more "fixes".
+- Booking: leave the form (name, email, tier, format, optional topic) -> pay online (WeChat Pay / Stripe / international cards / bank transfer) -> schedule and format confirmed within 24 hours. Leave birth year-month-day-hour and the key question; the practitioner analyses in advance.
+- Formats: video (Zoom / Google Meet), voice (WeChat / Tencent Meeting), or text (Telegram / WhatsApp).
+- Birth hour unclear? Year-month-day alone still yields a 75%+ outline of core personality and cycles; 2-3 landmark life events calibrate the hour; completely hourless charts still allow macro-level analysis.
+- Contact / direct chat: Telegram @TangoEra_bot; WhatsApp +1 626 781 3770 (David); WeChat ID wxid_2pg1e4g80m5j22; X @webb591673. 7-day no-questions-asked refund promise; 256-bit SSL.
+- Never: fatalistic pronouncements ("destined to..."), prescriptive medical/legal/financial advice, talisman or "disaster-fix" product sales, scare readings, or promises to change real-world outcomes.`,
+  },
+];
+
+/** Resolve the fact sheet for a registered site domain ('' when the domain is unknown). */
+export function kbEssentialsFor(domain: string): string {
+  const hit = SITE_KB_ESSENTIALS.find((e) => domain.toLowerCase().includes(e.match));
+  return hit ? `\nSite knowledge essentials (authoritative facts about this site - use them even when the excerpts are incomplete, and prefer them over any excerpt that conflicts):\n${hit.facts}\n` : '';
+}
+
 const SYSTEM_PROMPT = `You are DocFlare, a friendly and precise documentation assistant for {{DOMAIN}}.
 
 Rules:
-- Answer ONLY using the documentation excerpts below. Never guess or use outside knowledge.
+- Answer ONLY using the documentation excerpts and the site knowledge essentials below. Never guess or use outside knowledge.
 - Reply in the language of the user's question (English question -> English answer, Vietnamese question -> Vietnamese answer), even when the excerpts are written in a different language. Translate the facts you use.
 - Answer directly, as if you knew the documentation yourself. Do not quote or list the excerpts, do not mention "the context", "the excerpts" or "the provided information", and do not add citation markers such as [1]. The sources are shown to the user separately.
-- If the excerpts do not contain the answer, say so briefly and suggest what the user could search for instead.
-- Never invent URLs, commands, flags, settings or version numbers that are not in the excerpts.
+- If neither the excerpts nor the essentials contain the answer, say so briefly and suggest what the user could search for instead.
+- Never invent URLs, commands, flags, settings or version numbers that are not in the excerpts or the essentials.
 - Be concise. Use Markdown: short paragraphs, bullet lists, and fenced code blocks for commands or code.
-
+{{KB_ESSENTIALS}}
 Documentation excerpts:
 {{CONTEXT}}`;
 
@@ -210,7 +244,9 @@ export function buildRagMessages(
           })
           .join('\n\n---\n\n');
 
-  const system = SYSTEM_PROMPT.replace('{{DOMAIN}}', domain).replace('{{CONTEXT}}', context);
+  const system = SYSTEM_PROMPT.replace('{{DOMAIN}}', domain)
+    .replace('{{KB_ESSENTIALS}}', kbEssentialsFor(domain))
+    .replace('{{CONTEXT}}', context);
 
   const trimmedHistory = history
     .slice(-MAX_HISTORY_TURNS)
